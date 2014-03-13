@@ -73,7 +73,6 @@ class LoginController extends Concrete5_Controller_Login {
                     throw new Exception(t('Invalid token.'));
                 }
 
-
                 $loginData['success']=1;
                 $loginData['msg']=t('Login Successful');
                 $loginData['uID'] = intval($u->getUserID());

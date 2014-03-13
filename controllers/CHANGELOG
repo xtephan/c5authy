@@ -1,0 +1,8 @@
+0.85
+* single pages in dashboard for configuration
+
+0.84
+* Hooked up events for user added and updated
+
+0.83
+* Added user attributes to package install
