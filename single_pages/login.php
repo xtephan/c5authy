@@ -50,14 +50,14 @@ input {
 
                     <div style="margin-bottom: 25px" class="input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-phone"></i></span>
-                        <input id="uCode" type="password" class="form-control" name="uCode" placeholder="<?php echo t('Token'); ?>">
+                        <input id="uCode" type="password" class="form-control" name="uToken" placeholder="<?php echo t('Token'); ?>">
                     </div>
 
                     <div style="margin-top:10px" class="form-group">
                         <!-- Button -->
 
                         <div class="col-sm-12">
-                            <input type="submit" value="<?php echo t('Login')?>" class="btn btn-success">
+                            <input type="submit" value="<?php echo t('Login')?>" class="btn btn-primary">
                         </div>
                     </div>
 
