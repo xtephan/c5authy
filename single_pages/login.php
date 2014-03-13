@@ -61,16 +61,6 @@ input {
                         </div>
                     </div>
 
-
-                    <div class="form-group">
-                        <div class="col-md-12">
-                            <div style="border-top: 1px solid#888; padding-top:15px; font-size:85%" >
-                                <a href="mailto:support@unserialized.dk?Subject=Login%20Issue">
-                                    Need help?
-                                </a>
-                            </div>
-                        </div>
-                    </div>
                 </form>
             </div>
         </div>
