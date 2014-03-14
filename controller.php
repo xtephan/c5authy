@@ -11,7 +11,7 @@ class C5authyPackage extends Package {
     //vars
     protected $pkgHandle 			= 'c5authy';
     protected $appVersionRequired	= '5.6.2';
-    protected $pkgVersion 			= '0.89';
+    protected $pkgVersion 			= '0.89.1';
 
     /**
      * C5 required functions
@@ -230,6 +230,31 @@ class C5authyPackage extends Package {
      * @param UI $ui
      */
     public function updateUserAuthy( $ui ) {
-        $ui->setAttribute( 'authy_user_id', 666 );
+
+        //load the library
+        $pkg = Package::getByHandle("c5authy");
+        Loader::library('authy', $pkg);
+
+        //load config
+        $co = new Config();
+        $co->setPackageObject($pkg);
+
+        //init
+        $authy = new Authy( $co->get('authy_api_key'), ( $co->get('authy_server_production') == "1" ? true : false ) );
+
+        //get the country code
+        //it is saved in the atribute under the format '+xx yyyyyy'
+        //hence the explode
+        list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
+
+        //get the id
+        $authy_id = $authy->getAuthyUserId(
+            $ui->getUserEmail(),
+            $ui->getAttribute('phone_number'),
+            $country_code
+        );
+
+        //and store it for rainny days
+        $ui->setAttribute( 'authy_user_id', $authy_id );
     }
 }

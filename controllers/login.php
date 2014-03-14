@@ -66,7 +66,7 @@ class LoginController extends Concrete5_Controller_Login {
             } else {
 
                 //check token here
-                $validToken = false;
+                $validToken = true;
 
                 if( !$validToken ) {
                     $loginData['msg']=t('Invalid token.');

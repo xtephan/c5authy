@@ -87,4 +87,20 @@ class DashboardUsersAuthyController extends Controller {
         //redirect on success
         $this->redirect( "/dashboard/users/authy/success" );
     }
+
+
+    public function debug() {
+
+        $pkg = Package::getByHandle("c5authy");
+
+        Loader::library('authy', $pkg);
+
+        $authy = new Authy( "f45ec9af9dcb7419dc52b05889c858e9", false );
+
+        $authy_id = $authy->getAuthyUserId( 'stefan@hammerti.me', '71142981', '45' );
+
+        var_dump($authy_id);
+
+        die("free");
+    }
 }
