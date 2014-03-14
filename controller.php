@@ -235,12 +235,8 @@ class C5authyPackage extends Package {
         $pkg = Package::getByHandle("c5authy");
         Loader::library('authy', $pkg);
 
-        //load config
-        $co = new Config();
-        $co->setPackageObject($pkg);
-
         //init
-        $authy = new Authy( $co->get('authy_api_key'), ( $co->get('authy_server_production') == "1" ? true : false ) );
+        $authy = new Authy();
 
         //get the country code
         //it is saved in the atribute under the format '+xx yyyyyy'

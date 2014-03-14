@@ -26,22 +26,30 @@ class Authy {
      * @param bool $production
      * @throws Exception
      */
-    public function __construct( $api_key, $production =false ) {
+    public function __construct( $api_key = null, $production =false ) {
 
-        //sanity checks
+        //load the data from config of is being passed to us?
         if( empty($api_key) ) {
-            throw new Exception( t('API Key required!') );
+
+            //get pachage and configuration
+            $pkg = Package::getByHandle("c5authy");
+            Loader::library('authy', $pkg);
+
+            $co = new Config();
+            $co->setPackageObject($pkg);
+
+            $production = ( $co->get('authy_server_production') == "1" ? true : false );
+
+            //set the values
+            $this->api_key = $co->get('authy_api_key');
+            $this->server = $production ? self::LIVE_SERVER : self::SANDBOX_SERVER;
+
+        } else {
+            //set the values
+            $this->api_key = $api_key;
+            $this->server = $production ? self::LIVE_SERVER : self::SANDBOX_SERVER;
         }
 
-        if( is_bool($production) === false ) {
-            throw new Exception( t('Expecting boolean value') );
-        }
-
-        //set the key
-        $this->api_key = $api_key;
-
-        //set the proper server
-        $this->server = $production ? self::LIVE_SERVER : self::SANDBOX_SERVER;
     }
 
     /**
@@ -90,6 +98,27 @@ class Authy {
 
         //one should not find itself here
         throw new Exception( t('Unexpected Authy reponse') );
+    }
+
+    /**
+     * Validates a given token
+     *
+     * @param $token
+     * @param $auth_id
+     * @return boolean
+     * @throws Exception
+     */
+    public function validToken( $token, $auth_id ) {
+
+        if( empty($token) ) {
+            throw new Exception( t('Invalid token!') );
+        }
+
+        if( empty($auth_id) ) {
+            throw new Exception( t('Invalid authy ID!') );
+        }
+
+        return false;
     }
 
     /**

@@ -65,10 +65,18 @@ class LoginController extends Concrete5_Controller_Login {
                 }
             } else {
 
-                //check token here
-                $validToken = true;
+                //Start verifing the token
+                //load the library
+                $pkg = Package::getByHandle("c5authy");
+                Loader::library('authy', $pkg);
 
-                if( !$validToken ) {
+                //UI
+                $ui = UserInfo::getByID( $u->getUserID() );
+
+                //authy
+                $authy = new Authy();
+
+                if( ! $authy->validToken( $this->post('uToken'), $ui->getAttribute('authy_user_id') ) ) {
                     $loginData['msg']=t('Invalid token.');
                     throw new Exception(t('Invalid token.'));
                 }
