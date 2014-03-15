@@ -10,8 +10,8 @@ class C5authyPackage extends Package {
 
     //vars
     protected $pkgHandle 			= 'c5authy';
-    protected $appVersionRequired	= '5.6.2';
-    protected $pkgVersion 			= '0.89.91';
+    protected $appVersionRequired	= '5.6.0';
+    protected $pkgVersion 			= '0.9';
 
     /**
      * Package description
@@ -138,7 +138,7 @@ class C5authyPackage extends Package {
         }
 
         if( !$co->get('authy_server_production') ) {
-            $co->save('authy_server_production', "0");
+            $co->save('authy_server_production', "1");
         }
 
         if( !$co->get('authy_api_key') ) {
