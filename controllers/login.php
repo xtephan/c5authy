@@ -28,6 +28,10 @@ class LoginController extends Concrete5_Controller_Login {
         Loader::library('authy', $pkg);
 
         $this->authy = new Authy();
+
+        //send config to view
+        $this->set( 'otp', $this->authy->isOTP() );
+        $this->set( 'sms', $this->authy->isSMSAllowed() );
     }
 
     /**
@@ -35,10 +39,6 @@ class LoginController extends Concrete5_Controller_Login {
      */
     public function view() {
         parent::view(); //callback to parent
-
-        //send config to view
-        $this->set( 'otp', $this->authy->isOTP() );
-        $this->set( 'sms', $this->authy->isSMSAllowed() );
     }
 
     /**
@@ -60,7 +60,10 @@ class LoginController extends Concrete5_Controller_Login {
                 throw new Exception($ip->getErrorMessage());
             }
 
-            if ( (!$vs->notempty($this->post('uName'))) || (!$vs->notempty($this->post('uPassword')))) {
+            //on OTP mode, we dont need password
+            $pass = $this->authy->isOTP() ? $this->post('uToken') : $this->post('uPassword');
+
+            if ( (!$vs->notempty($this->post('uName'))) || (!$vs->notempty( $pass ))) {
                 if (USER_REGISTRATION_WITH_EMAIL_ADDRESS) {
                     throw new Exception(t('An email address and password are required.'));
                 } else {
@@ -72,19 +75,49 @@ class LoginController extends Concrete5_Controller_Login {
                 throw new Exception(t('A token is required.'));
             }
 
-            $u = new User($this->post('uName'), $this->post('uPassword'));
+            /*
+             * If OTP login is enabled, make a few changes in the way C5 handles login
+             * Search the user list for a user with $this->post('uName'), that is active.
+             * Go to step 2, token verification, only if userlist contains 1 elements
+             */
+            if($this->authy->isOTP()) {
 
-            if ($u->isError()) {
+                Loader::model('user_list');
+                $ul = new UserList();
+                $ul->filterByUserName($this->post('uName'));
+                $ul->filterByIsActive(1);
+                $users = $ul->get(1);
+
+                //do we have a valid username?
+                if( count($users) == 1 ) {
+                    $step1Error = false;
+                    $u=$users[0];
+                } else {
+                    $step1Error = true;
+
+                    //fake an unexisting user to get the invalid error msg
+                    $u = new User("aEoPzXPh9DcOhwkuHHCi","BlWgm42QgTPQjycXSAcU");
+                }
+
+
+            } else { //default C5 statement
+
+                $u = new User($this->post('uName'), $this->post('uPassword'));
+                $step1Error = $u->isError();
+            }
+
+            if ( $step1Error ) {
                 switch($u->getError()) {
                     case USER_NON_VALIDATED:
                         throw new Exception(t('This account has not yet been validated. Please check the email associated with this account and follow the link it contains.'));
                         break;
                     case USER_INVALID:
-                        if (USER_REGISTRATION_WITH_EMAIL_ADDRESS) {
-                            throw new Exception(t('Invalid email address or password.'));
-                        } else {
-                            throw new Exception(t('Invalid username or password.'));
-                        }
+
+                        $usr_str = USER_REGISTRATION_WITH_EMAIL_ADDRESS ? 'email' : 'username';
+                        $pwd_str = $this->authy->isOTP() ? 'token' : 'password';
+
+                        throw new Exception(t('Invalid ' . $usr_str . ' or ' . $pwd_str . '.'));
+
                         break;
                     case USER_INACTIVE:
                         throw new Exception(t('This user is inactive. Please contact us regarding this account.'));
@@ -108,6 +141,12 @@ class LoginController extends Concrete5_Controller_Login {
                     throw new Exception(t('Invalid token.'));
                 }
 
+                //log the user in if OTP
+                if($this->authy->isOTP()) {
+                    User::loginByUserID($u->getUserID());
+                }
+
+                //and finish the process
                 $loginData['success']=1;
                 $loginData['msg']=t('Login Successful');
                 $loginData['uID'] = intval($u->getUserID());
