@@ -11,7 +11,7 @@ class C5authyPackage extends Package {
     //vars
     protected $pkgHandle 			= 'c5authy';
     protected $appVersionRequired	= '5.6.2';
-    protected $pkgVersion 			= '0.89.81';
+    protected $pkgVersion 			= '0.89.9';
 
     /**
      * Package description
@@ -75,9 +75,6 @@ class C5authyPackage extends Package {
 
         //callback to parent for install
         parent::install();
-
-        //and lets configure this suckers
-        $this->configurePackage($pkg);
     }
 
     /**
@@ -101,9 +98,21 @@ class C5authyPackage extends Package {
      */
     public function uninstall() {
 
+        $pkg = $this;
+
+        //clean up after ourselfs
+        $this->unconfigurePackage();
+
         //callback to parrent
         parent::uninstall();
+    }
 
+    /**
+     * Unconfigure the package
+     */
+    protected function unconfigurePackage() {
+        $this->unconfigureAttributes();
+        $this->unconfigureSinglePages();
     }
 
     /**
@@ -131,7 +140,7 @@ class C5authyPackage extends Package {
         }
 
         if( !$co->get('authy_sms_tokens') ) {
-            $this->set( 'authy_sms_tokens', "2" );
+            $co->save( 'authy_sms_tokens', "2" );
         }
 
         if( !$co->get('authy_server_production') ) {
@@ -160,6 +169,32 @@ class C5authyPackage extends Package {
             $sp = Page::getByPath('/dashboard/users/authy');
         }
         $sp->setAttribute('icon_dashboard', "icon-cog");
+    }
+
+    /**
+     * Unconfigure SinglePages
+     */
+    protected function unconfigureSinglePages() {
+        //load needed models
+        Loader::model('single_page');
+
+        //remove the config singlepage from dashboard
+        $sp = Page::getByPath('/dashboard/users/authy');
+        $sp->delete();
+
+        //make sure C5 will use the default login page
+        $db = Loader::db();
+        $args = array(
+            '0', //concrete's default
+            Page::getByPath("/login")->getCollectionID() //login page ID
+        );
+        $db->query("update Pages set pkgID = ? where cID = ?", $args );
+
+        //and make sure the single page from core has the correct name
+        $path = getcwd() . DIRECTORY_SEPARATOR . "concrete" . DIRECTORY_SEPARATOR . "single_pages" . DIRECTORY_SEPARATOR;
+        if( file_exists( $path . "login.php.bak" )  ) {
+            rename( $path . "login.php.bak", $path . "login.php" );
+        }
     }
 
     /**
@@ -242,6 +277,15 @@ class C5authyPackage extends Package {
             );
         }
 
+    }
+
+    /**
+     * Removes the attributes that the code made
+     */
+    protected function unconfigureAttributes() {
+        UserAttributeKey::getByHandle('phone_number')->delete();
+        UserAttributeKey::getByHandle('phone_country_code')->delete();
+        UserAttributeKey::getByHandle('authy_user_id')->delete();
     }
 
     /**
