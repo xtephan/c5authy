@@ -11,7 +11,7 @@ class C5authyPackage extends Package {
     //vars
     protected $pkgHandle 			= 'c5authy';
     protected $appVersionRequired	= '5.6.2';
-    protected $pkgVersion 			= '0.89.1';
+    protected $pkgVersion 			= '0.89.2';
 
     /**
      * C5 required functions
@@ -109,12 +109,16 @@ class C5authyPackage extends Package {
         $co->setPackageObject($pkg);
 
         //set default options
-        if( !$co->get('authy_enabled') ) {
-            $co->save('authy_enabled',false);
+        if( !$co->get('authy_type') ) {
+            $co->save('authy_type', "0");
+        }
+
+        if( !$co->get('authy_sms_tokens') ) {
+            $this->set( 'authy_sms_tokens', "2" );
         }
 
         if( !$co->get('authy_server_production') ) {
-            $co->save('authy_server_production',false);
+            $co->save('authy_server_production', "0");
         }
 
         if( !$co->get('authy_api_key') ) {

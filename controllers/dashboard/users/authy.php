@@ -7,7 +7,7 @@
  */
 defined('C5_EXECUTE') or die("Access Denied.");
 
-class DashboardUsersAuthyController extends Controller {
+class DashboardUsersAuthyController extends DashboardBaseController {
 
     public function setIcons() {
         $sp = Page::getByPath('/dashboard/users/authy');
@@ -27,7 +27,12 @@ class DashboardUsersAuthyController extends Controller {
 
         //error msg
         if( $msg == "key_error" ) {
-            $this->set("error", t('API key cannot be null!'));
+            $this->error = t('API key cannot be null!');
+        }
+
+        //error msg
+        if( $msg == "token_error" ) {
+            $this->error = t('Invalid security token!');
         }
 
         //grab existing configuration
@@ -36,9 +41,11 @@ class DashboardUsersAuthyController extends Controller {
         $co->setPackageObject($pkg);
 
         //send saved config to view
-        $this->set( 'authy_enabled', $co->get('authy_enabled') );
+        $this->set( 'authy_type', $co->get('authy_type') );
         $this->set( 'authy_server_production', $co->get('authy_server_production') );
+        $this->set( 'authy_sms_tokens', $co->get('authy_sms_tokens') );
         $this->set( 'authy_api_key', $co->get('authy_api_key') );
+
     }
 
     /**
@@ -46,61 +53,57 @@ class DashboardUsersAuthyController extends Controller {
      */
     public function update_config() {
 
-        if( empty($_POST["AUTHY_KEY"]) ) {
-            $this->redirect( "/dashboard/users/authy/key_error" );
-        }
+        if ($this->token->validate("update_authy_config")) {
+            if ($this->isPost()) {
 
-        //set options on package bases
-        $pkg = Package::getByHandle("c5authy");
-        $co = new Config();
-        $co->setPackageObject($pkg);
+                //we need a good api key
+                $api_key = $this->post("AUTHY_KEY");
+                if( empty( $api_key ) ) {
+                    $this->redirect( "/dashboard/users/authy/key_error" );
+                }
 
-        //should be toggle the login page?
-        $to_enable = $_POST["ENABLE_AUTHY"] == "1" ? true : false;
+                //set options on package bases
+                $pkg = Package::getByHandle("c5authy");
+                $co = new Config();
+                $co->setPackageObject($pkg);
 
-        if( $co->get('authy_enabled') != $to_enable ) {
+                //should we switch to/from default system?
+                $post_default_auth = ($this->post("AUTH_TYPE") == "0" ? true : false);
+                $config_default_auth = ($co->get('authy_type') == "0" ? true : false );
 
-            $db = Loader::db();
+                //yeah, we do
+                //we need to take over the login singlepage
+                if( $post_default_auth != $config_default_auth ) {
+                    $db = Loader::db();
 
-            //should we take over the single page?
-            if($to_enable) {
-                $args = array(
-                    $pkg->getPackageID(), //package ID
-                    Page::getByPath("/login")->getCollectionID()
-                );
-            } else {
-                $args = array(
-                    '0', //concrete's default
-                    Page::getByPath("/login")->getCollectionID()
-                );
+                    //should we take over the single page?
+                    if( $post_default_auth ) {
+                        $args = array(
+                            '0', //concrete's default
+                            Page::getByPath("/login")->getCollectionID()
+                        );
+                    } else {
+                        $args = array(
+                            $pkg->getPackageID(), //package ID
+                            Page::getByPath("/login")->getCollectionID()
+                        );
+                    }
+
+                    //update a core singlepage
+                    $db->query("update Pages set pkgID = ? where cID = ?", $args );
+                }
+
+                //save the config
+                $co->save('authy_type', $this->post("AUTH_TYPE") );
+                $co->save('authy_server_production', $this->post("AUTHY_SERVER") );
+                $co->save('authy_sms_tokens', $this->post("AUTHY_SMS") );
+                $co->save('authy_api_key', $this->post("AUTHY_KEY"));
+
+                $this->redirect( "/dashboard/users/authy/success" );
             }
-
-            //update a core singlepage
-            $db->query("update Pages set pkgID = ? where cID = ?", $args );
+        } else {
+            $this->redirect( "/dashboard/users/authy/token_error" );
         }
-
-        //save new changes
-        $co->save('authy_enabled', $_POST["ENABLE_AUTHY"] == "1" ? true : false);
-        $co->save('authy_server_production', $_POST["AUTHY_SERVER"] == "1" ? true : false);
-        $co->save('authy_api_key', $_POST["AUTHY_KEY"]);
-
-        //redirect on success
-        $this->redirect( "/dashboard/users/authy/success" );
     }
 
-
-    public function debug() {
-
-        $pkg = Package::getByHandle("c5authy");
-
-        Loader::library('authy', $pkg);
-
-        $authy = new Authy( "f45ec9af9dcb7419dc52b05889c858e9", false );
-
-        $authy_id = $authy->getAuthyUserId( 'stefan@hammerti.me', '71142981', '45' );
-
-        var_dump($authy_id);
-
-        die("free");
-    }
 }
