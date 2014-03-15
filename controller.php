@@ -11,7 +11,7 @@ class C5authyPackage extends Package {
     //vars
     protected $pkgHandle 			= 'c5authy';
     protected $appVersionRequired	= '5.6.2';
-    protected $pkgVersion 			= '0.89.9';
+    protected $pkgVersion 			= '0.89.91';
 
     /**
      * Package description
@@ -68,13 +68,11 @@ class C5authyPackage extends Package {
      */
     public function install() {
 
-        $pkg = $this;
-
-        //Check dependencies
-        $this->checkDependencies($pkg);
-
         //callback to parent for install
-        parent::install();
+        $pkg = parent::install();
+		
+		//and lets configure this suckers
+        $this->configurePackage($pkg);
     }
 
     /**
@@ -84,10 +82,8 @@ class C5authyPackage extends Package {
      */
     public function upgrade() {
 
-        $pkg = $this;
-
         //callback to parent for heavy lifting
-        parent::upgrade();
+        $pkg = parent::upgrade();
 
         //and lets configure this suckers
         $this->configurePackage($pkg);
@@ -97,8 +93,6 @@ class C5authyPackage extends Package {
      * Uninstall the package
      */
     public function uninstall() {
-
-        $pkg = $this;
 
         //clean up after ourselfs
         $this->unconfigurePackage();
@@ -163,13 +157,13 @@ class C5authyPackage extends Package {
 
         //dashboard singlepage for configuration
         $sp = SinglePage::add('/dashboard/users/authy', $pkg);
-        if ($sp) {
+        
+		if ($sp) {
             $sp->update(array('cName'=> 'Authy Configuration'));
-        } else {
-            $sp = Page::getByPath('/dashboard/users/authy');
+			$sp->setAttribute('icon_dashboard', "icon-cog");
         }
-        $sp->setAttribute('icon_dashboard', "icon-cog");
-    }
+		
+	}
 
     /**
      * Unconfigure SinglePages
