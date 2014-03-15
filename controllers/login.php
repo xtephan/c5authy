@@ -96,7 +96,8 @@ class LoginController extends Concrete5_Controller_Login {
                     $step1Error = true;
 
                     //fake an unexisting user to get the invalid error msg
-                    $u = new User("aEoPzXPh9DcOhwkuHHCi","BlWgm42QgTPQjycXSAcU");
+                    $u = new User();
+                    $u->loadError(USER_INVALID);
                 }
 
 
@@ -137,8 +138,13 @@ class LoginController extends Concrete5_Controller_Login {
                 $authy = new Authy();
 
                 if( ! $authy->validToken( $this->post('uToken'), $ui->getAttribute('authy_user_id') ) ) {
-                    $loginData['msg']=t('Invalid token.');
-                    throw new Exception(t('Invalid token.'));
+
+                    $usr_str = USER_REGISTRATION_WITH_EMAIL_ADDRESS ? 'email or' : 'username or';
+                    $msg_str = $this->authy->isOTP() ? $usr_str : '';
+
+                    $loginData['msg']=t('Invalid ' . $msg_str . ' token.');
+                    throw new Exception(t('Invalid ' . $msg_str . ' token.'));
+
                 }
 
                 //log the user in if OTP
