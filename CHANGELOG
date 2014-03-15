@@ -1,6 +1,7 @@
 0.89.2
 * Updated config page
 * OTP login
+* Fix for "use emails for login"
 
 0.89.1
 * User user Authy ID on user update

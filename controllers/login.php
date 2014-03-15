@@ -84,8 +84,15 @@ class LoginController extends Concrete5_Controller_Login {
 
                 Loader::model('user_list');
                 $ul = new UserList();
-                $ul->filterByUserName($this->post('uName'));
                 $ul->filterByIsActive(1);
+
+                //search by name or email?
+                if( USER_REGISTRATION_WITH_EMAIL_ADDRESS ) {
+                    $ul->filterByKeywords( $this->post('uName') );
+                } else {
+                    $ul->filterByUserName( $this->post('uName') );
+                }
+
                 $users = $ul->get(1);
 
                 //do we have a valid username?
