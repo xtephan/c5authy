@@ -90,24 +90,19 @@ class LoginController extends Concrete5_Controller_Login {
 
                 //do we have a valid username?
                 if( count($users) == 1 ) {
-                    $step1Error = false;
                     $u=$users[0];
                 } else {
-                    $step1Error = true;
-
-                    //fake an unexisting user to get the invalid error msg
+                    //fake it if not
                     $u = new User();
                     $u->loadError(USER_INVALID);
                 }
 
-
             } else { //default C5 statement
 
                 $u = new User($this->post('uName'), $this->post('uPassword'));
-                $step1Error = $u->isError();
             }
 
-            if ( $step1Error ) {
+            if ( $u->isError() ) {
                 switch($u->getError()) {
                     case USER_NON_VALIDATED:
                         throw new Exception(t('This account has not yet been validated. Please check the email associated with this account and follow the link it contains.'));
