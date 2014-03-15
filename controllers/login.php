@@ -135,11 +135,29 @@ class LoginController extends Concrete5_Controller_Login {
 
                 //UI
                 $ui = UserInfo::getByID( $u->getUserID() );
+                $authy_id = $ui->getAttribute('authy_user_id');
 
                 //authy
                 $authy = new Authy();
 
-                if( ! $authy->validToken( $this->post('uToken'), $ui->getAttribute('authy_user_id') ) ) {
+                //If for some reason we dont have the Authy ID stored, try again to get it
+                if( empty($authy_id) ) {
+
+                    list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
+                    $country_code = ltrim( $country_code, '+' );
+
+                    $authy_id = $authy->getAuthyUserId(
+                        $ui->getUserEmail(),
+                        $ui->getAttribute('phone_number'),
+                        $country_code
+                    );
+
+                    //save id DB
+                    $ui->setAttribute( 'authy_user_id', $authy_id );
+                }
+
+                //validate the token
+                if( ! $authy->validToken( $this->post('uToken'), $authy_id ) ) {
 
                     $usr_str = USER_REGISTRATION_WITH_EMAIL_ADDRESS ? 'email or' : 'username or';
                     $msg_str = $this->authy->isOTP() ? $usr_str : '';

@@ -11,7 +11,7 @@ class C5authyPackage extends Package {
     //vars
     protected $pkgHandle 			= 'c5authy';
     protected $appVersionRequired	= '5.6.2';
-    protected $pkgVersion 			= '0.89.2';
+    protected $pkgVersion 			= '0.89.6';
 
     /**
      * C5 required functions
@@ -195,9 +195,7 @@ class C5authyPackage extends Package {
             );
 
             ///add the options
-            $countryCodes = array(
-                "+45 (Denmark)"
-            );
+            $countryCodes = $this->getCountryCodes();
 
             foreach( $countryCodes as $thisCode ) {
                 SelectAttributeTypeOption::add( $atr_phone_country_code, $thisCode );
@@ -219,8 +217,8 @@ class C5authyPackage extends Package {
                     'akIsEditable'              => 1,
                     'uakProfileEdit'            => 1,
                     'uakProfileEditRequired'    => 1,
-                    'uakRegisterEdit'           => 1,
-                    'uakRegisterEditRequired'   => 1,
+                    'uakRegisterEdit'           => 0,
+                    'uakRegisterEditRequired'   => 0,
                     'uakProfileDisplay'         => 1
                 ),
                 $pkg
@@ -235,6 +233,17 @@ class C5authyPackage extends Package {
      */
     public function updateUserAuthy( $ui ) {
 
+        //Allow only digits in the phone number
+        $dirty_phone_number = $ui->getAttribute('phone_number');
+        $clean_phone_number = preg_replace("/[^0-9]/", "", $dirty_phone_number);
+        if( $dirty_phone_number != $clean_phone_number ) {
+            $ui->setAttribute('phone_number',$clean_phone_number);
+        }
+
+        //transform the country code in a format Authy likes
+        list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
+        $country_code = ltrim( $country_code, '+' );
+
         //load the library
         $pkg = Package::getByHandle("c5authy");
         Loader::library('authy', $pkg);
@@ -242,22 +251,34 @@ class C5authyPackage extends Package {
         //init
         $authy = new Authy();
 
-        //get the country code
-        //it is saved in the atribute under the format '+xx yyyyyy'
-        //hence the explode
-        list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
-
-        //replace the + in the country code
-        $country_code = ltrim( $country_code, '+' );
-
         //get the id
         $authy_id = $authy->getAuthyUserId(
             $ui->getUserEmail(),
-            $ui->getAttribute('phone_number'),
+            $clean_phone_number,
             $country_code
         );
 
         //and store it for rainny days
         $ui->setAttribute( 'authy_user_id', $authy_id );
+    }
+
+    /**
+     * Returns an array full of country codes
+     * @return array
+     */
+    private function getCountryCodes() {
+
+        $result = array();
+
+        $file_path = dirname(__FILE__) . DIRECTORY_SEPARATOR  . "country_codes.csv";
+
+        if (($handle = fopen($file_path, "r")) !== false) {
+            while (($data = fgetcsv($handle)) !== false) {
+                $result[] = sprintf("+%s (%s)", $data[1], $data[0]);
+            }
+            fclose($handle);
+        }
+
+        return $result;
     }
 }
