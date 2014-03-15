@@ -3,7 +3,7 @@
 * Package controller
 * c5authy
 * @author: Stefan Fodor
-* (C) Stefan Fodor @ 2014
+* Built with love by Stefan Fodor @ 2014
 */
 
 class C5authyPackage extends Package {
