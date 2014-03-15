@@ -135,7 +135,7 @@ class Authy {
         }
 
 
-        $got = $this->req( sprintf("/verify/%s/%s", $token, $authy_id) );
+        $got = $this->req( sprintf("/verify/%s/%s", $token, $authy_id), null, false, true );
 
         //sanity check
         if( is_object($got) ) {
