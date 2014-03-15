@@ -83,7 +83,7 @@ class Authy {
 
         //and ask authy
         $got = $this->req( '/users/new', $payload , true );
-        echo "<pre>"; print_r($got);
+
         //are we ok?
         if( $got->success == false ) {
             throw new Exception( t('Authy error when creating/updating a user') );

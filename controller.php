@@ -243,6 +243,9 @@ class C5authyPackage extends Package {
         //hence the explode
         list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
 
+        //replace the + in the country code
+        $country_code = ltrim( $country_code, '+' );
+
         //get the id
         $authy_id = $authy->getAuthyUserId(
             $ui->getUserEmail(),
