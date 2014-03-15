@@ -66,13 +66,22 @@
             <div class="control-group">
                 <label for="uPassword" class="control-label"><?php echo t('New Password')?></label>
                 <div class="controls">
-                    <input type="password" name="uPassword" id="uPassword" class="ccm-input-text">
+                    <input tabindex="1" type="password" name="uPassword" id="uPassword" class="ccm-input-text">
                 </div>
             </div>
             <div class="control-group">
                 <label for="uPasswordConfirm"  class="control-label"><?php echo t('Confirm Password')?></label>
                 <div class="controls">
-                    <input type="password" name="uPasswordConfirm" id="uPasswordConfirm" class="ccm-input-text">
+                    <input tabindex="2" type="password" name="uPasswordConfirm" id="uPasswordConfirm" class="ccm-input-text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="uPasswordConfirm"  class="control-label">
+                        <?php echo t('Token')?>
+                        <a tabindex="4" href="javascript:void(0);" id="request_sms" style="outline: none;">(<?php echo t('Request SMS token') ?>)</a>
+                </label>
+                <div class="controls">
+                    <input tabindex="3" type="password" name="uToken" id="uToken" class="ccm-input-text">
                 </div>
             </div>
 

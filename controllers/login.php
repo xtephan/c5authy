@@ -128,17 +128,9 @@ class LoginController extends Concrete5_Controller_Login {
                 }
             } else {
 
-                //Start verifing the token
-                //load the library
-                $pkg = Package::getByHandle("c5authy");
-                Loader::library('authy', $pkg);
-
                 //UI
                 $ui = UserInfo::getByID( $u->getUserID() );
                 $authy_id = $ui->getAttribute('authy_user_id');
-
-                //authy
-                $authy = new Authy();
 
                 //If for some reason we dont have the Authy ID stored, try again to get it
                 if( empty($authy_id) ) {
@@ -146,7 +138,7 @@ class LoginController extends Concrete5_Controller_Login {
                     list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
                     $country_code = ltrim( $country_code, '+' );
 
-                    $authy_id = $authy->getAuthyUserId(
+                    $authy_id = $this->authy->getAuthyUserId(
                         $ui->getUserEmail(),
                         $ui->getAttribute('phone_number'),
                         $country_code
@@ -157,7 +149,7 @@ class LoginController extends Concrete5_Controller_Login {
                 }
 
                 //validate the token
-                if( ! $authy->validToken( $this->post('uToken'), $authy_id ) ) {
+                if( ! $this->authy->validToken( $this->post('uToken'), $authy_id ) ) {
 
                     $usr_str = USER_REGISTRATION_WITH_EMAIL_ADDRESS ? 'email or' : 'username or';
                     $msg_str = $this->authy->isOTP() ? $usr_str : '';
@@ -193,6 +185,67 @@ class LoginController extends Concrete5_Controller_Login {
             $jsonHelper=Loader::helper('json');
             echo $jsonHelper->encode($loginData);
             die;
+        }
+    }
+
+    /**
+     * Change password
+     */
+    public function change_password($uHash = '') {
+        $db = Loader::db();
+        $h = Loader::helper('validation/identifier');
+        $e = Loader::helper('validation/error');
+        $ui = UserInfo::getByValidationHash($uHash);
+        if (is_object($ui)) {
+            $hashCreated = $db->GetOne("select uDateGenerated FROM UserValidationHashes where uHash=?", array($uHash));
+            if ($hashCreated < (time()-(USER_CHANGE_PASSWORD_URL_LIFETIME))) {
+                $h->deleteKey('UserValidationHashes','uHash',$uHash);
+                throw new Exception( t('Key Expired. Please visit the forgot password page again to have a new key generated.') );
+            } else {
+
+                if (strlen($_POST['uPassword'])) {
+
+                    $authy_id = $ui->getAttribute('authy_user_id');
+
+                    //validate the token
+                    if( ! $this->authy->validToken( $_POST['uToken'], $authy_id ) ) {
+                        throw new Exception(t('Invalid token.'));
+                    }
+
+
+                    $userHelper = Loader::helper('concrete/user');
+                    $userHelper->validNewPassword($_POST['uPassword'],$e);
+
+                    if (strlen($_POST['uPassword']) && $_POST['uPasswordConfirm']!=$_POST['uPassword']) {
+                        $e->add(t('The two passwords provided do not match.'));
+                    }
+
+                    if (!$e->has()) {
+                        $ui->changePassword( $_POST['uPassword'] );
+                        $h->deleteKey('UserValidationHashes','uHash',$uHash);
+                        $this->set('passwordChanged', true);
+
+                        $u = $ui->getUserObject();
+                        if (USER_REGISTRATION_WITH_EMAIL_ADDRESS) {
+                            $_POST['uName'] =  $ui->getUserEmail();
+                        } else {
+                            $_POST['uName'] =  $u->getUserName();
+                        }
+                        $this->do_login();
+
+                        return;
+                    } else { // This else is always used (due to return above), no need for else statement.
+                        $this->set('uHash', $uHash);
+                        $this->set('changePasswordForm', true);
+                        $this->set('errorMsg', join( '<br>', $e->getList() ) );
+                    }
+                } else {
+                    $this->set('uHash', $uHash);
+                    $this->set('changePasswordForm', true);
+                }
+            }
+        } else {
+            throw new Exception( t('Invalid Key. Please visit the forgot password page again to have a new key generated.') );
         }
     }
 

@@ -1,5 +1,6 @@
 0.89.81
 * Fixed user registration
+* Secured Forgot Password
 
 0.89.6
 * More sanity in saving phone numbers
