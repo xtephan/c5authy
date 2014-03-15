@@ -12,9 +12,27 @@
            phone = prompt("Please enter your phone number");
 
            if (phone!=null) {
-               //TODO: ajax logic here
+               $.ajax({
+                   url : "<?php echo $this->action('request_sms') ?>",
+                   type : 'POST',
+                   data : { phone: phone },
+                   dataType : 'json',
+                   beforeSend : function(jqXHR, settings ) {
+                       $("#request_sms").html( "(<?php echo t('Requesting SMS token...') ?>)" );
+                   },
+                   error: function(jqXHR, textStatus, errorThrown) {
+                       // If request fails
+                       alert("Internal error!");
+                   },
+                   success: function(data, textStatus, jqXHR) {
+                       if(data.status !== "OK") {
+                           alert(data.msg);
+                       } else {
+                           $("#request_sms").html( "(<?php echo t('SMS sent successfully!') ?>)" );
+                       }
+                   }
+               });
            }
-
        });
     });
 </script>
@@ -187,7 +205,7 @@
                                         <?php echo t('Username')?>
                                     <?php  } ?></label>
                                 <div class="controls">
-                                    <input type="text" name="uName" id="uName" <?php echo  (isset($uName)?'value="'.$uName.'"':'');?> class="ccm-input-text">
+                                    <input tabindex="1" type="text" name="uName" id="uName" <?php echo  (isset($uName)?'value="'.$uName.'"':'');?> class="ccm-input-text">
                                 </div>
 
                             </div>
@@ -196,7 +214,7 @@
                                 <label for="uPassword" class="control-label"><?php echo t('Password')?></label>
 
                                 <div class="controls">
-                                    <input type="password" name="uPassword" id="uPassword" class="ccm-input-text" />
+                                    <input tabindex="2" type="password" name="uPassword" id="uPassword" class="ccm-input-text" />
                                 </div>
 
                             </div>
@@ -204,11 +222,11 @@
 
                                 <label for="uPassword" class="control-label">
                                        <?php echo t('Token')?>
-                                       <a href="javascript:void(0);" id="request_sms" style="font-size: 10px; display:block; margin-top: -5px;">(<?php echo t('Request SMS token') ?>)</a>
+                                       <a tabindex="4" href="javascript:void(0);" id="request_sms" style="font-size: 10px; display:block; margin-top: -5px; outline: none;">(<?php echo t('Request SMS token') ?>)</a>
                                 </label>
 
                                 <div class="controls">
-                                    <input type="password" name="uToken" id="uToken" class="ccm-input-text" />
+                                    <input tabindex="3" type="password" name="uToken" id="uToken" class="ccm-input-text" />
                                 </div>
 
                             </div>

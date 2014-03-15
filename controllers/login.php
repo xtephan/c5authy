@@ -104,4 +104,88 @@ class LoginController extends Concrete5_Controller_Login {
         }
     }
 
+    /**
+     * Make a request to send an SMS token to a user
+     */
+    public function request_sms() {
+
+        //sanity check
+        if( !$this->isPost() ) {
+            throw new Exception( t('Invalid call.') );
+        }
+
+        //get and parse the phone number
+        $phone = $this->post('phone');
+
+
+        //remove and non valid chars
+        $phone = preg_replace("/[^0-9]/", "", $phone);
+
+        //remove leading country code 00es
+        if( substr($phone,0,2) == "00" ) {
+            $phone = substr($phone,2);
+        }
+
+        //last sanity check after parsing
+        if( empty($phone) ) {
+            echo json_encode( array( "status" => "FAIL", "msg" => t("Invalid phone number") ) );
+            exit();
+        }
+
+        //find the user with the phone number
+        Loader::model('user_list');
+        $ul = new UserList();
+
+        //filter by the phone number
+        $ul->filterByAttribute('phone_number', $phone);
+
+        //and get the first and only result
+        $users = $ul->get(1);
+
+        //no users found, maybe he added the prefix to the phone number
+        if( count($users) == 0 ) {
+
+            //adjust the phone
+            $phone = substr($phone,2);
+
+            //and try a new search
+            $ul = new UserList();
+            $ul->filterByAttribute('phone_number', $phone);
+            $users = $ul->get(1);
+        }
+
+        //if still no result, we dont have this number in DB
+        if( count($users) == 0 ) {
+            echo json_encode( array( "status" => "FAIL", "msg" => t("Non existing phone number") ) );
+            exit();
+        }
+
+        $ui = UserInfo::getByID( $users[0]->getUserID() );
+
+        //Last sanity check, i promisse
+        $authy_id = $ui->getAttribute('authy_user_id');
+        if( empty($authy_id) ) {
+            echo json_encode( array( "status" => "FAIL", "msg" => t("Invalid Authy Account") ) );
+            exit();
+        }
+
+
+        //load the library
+        $pkg = Package::getByHandle("c5authy");
+        Loader::library('authy', $pkg);
+        $authy = new Authy();
+
+        //request the SMS
+        if( $authy->requestSMS( $authy_id ) ) {
+            //report that everything is ok
+            echo json_encode( array( "status" => "OK" ) );
+        } else {
+            //small problem
+            echo json_encode( array( "status" => "FAIL", "msg" => "Error while requesting SMS token" ) );
+        }
+
+        //end exit
+        exit();
+    }
+
 }

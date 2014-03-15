@@ -136,18 +136,54 @@ class Authy {
         throw new Exception( t('Authy Error: Unexpected response while verifying token!') );
     }
 
+
     /**
-     * Sends a request to Authy servers and resturns the response decoded
+     * Requests an SMS
+     *
+     * @param $authy_id
+     */
+    public function requestSMS( $authy_id ) {
+
+        if( empty($authy_id) ) {
+            throw new Exception( t('Invalid authy ID!') );
+        }
+
+        //Send the request
+        $got = $this->req( sprintf("/sms/%s", $authy_id), null, false, true );
+
+        //sanity check
+        if( is_object($got) ) {
+
+            //did we got an OK?
+            if( $got->success == true  ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        //one should not find itself here
+        throw new Exception( t('Authy Error: Unexpected response while requesting sms token!') );
+    }
+
+    /**
+     * Sends a request to Authy servers and returns the response decoded
      *
      * @param string $path
      * @param array $payload
      * @param bool $post
+     * @param bool $force
      * @return mixed
      */
-    private function req( $path, $payload = array(), $post = false ) {
+    private function req( $path, $payload = array(), $post = false, $force = false ) {
 
         //compose the req url
         $url = sprintf( '%s/protected/%s%s?api_key=%s', $this->server, self::FORMAT, $path, $this->api_key );
+
+        //force an action
+        if( $force ) {
+            $url .= "&force=true";
+        }
 
         //curl handler
         $ch = curl_init();
