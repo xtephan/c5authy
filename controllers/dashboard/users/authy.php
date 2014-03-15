@@ -78,20 +78,40 @@ class DashboardUsersAuthyController extends DashboardBaseController {
 
                     //should we take over the single page?
                     if( $post_default_auth ) {
+
                         $args = array(
                             '0', //concrete's default
                             Page::getByPath("/login")->getCollectionID()
                         );
+
+                        $original_name = "login.php.bak";
+                        $modified_name = "login.php";
+
                     } else {
+
                         $args = array(
                             $pkg->getPackageID(), //package ID
                             Page::getByPath("/login")->getCollectionID()
                         );
+
+                        $original_name = "login.php";
+                        $modified_name = "login.php.bak";
+
                     }
+
+                    /*
+                     * Concrete5 has a flaw in the way it loads file
+                     * Which causes to load \concrete\single_pages\login.php instead f the file in package
+                     * So we are renaming it so that the loader will definitely ignore it
+                     * This is not good practice, but then again, neither is the existing implementation
+                     */
+                    $path = getcwd() . DIRECTORY_SEPARATOR . "concrete" . DIRECTORY_SEPARATOR . "single_pages" . DIRECTORY_SEPARATOR;
+                    rename( $path . $original_name, $path . $modified_name );
 
                     //update a core singlepage
                     $db->query("update Pages set pkgID = ? where cID = ?", $args );
                 }
+
 
                 //save the config
                 $co->save('authy_type', $this->post("AUTH_TYPE") );

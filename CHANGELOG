@@ -1,6 +1,7 @@
 0.89.81
 * Fixed user registration
 * Secured Forgot Password
+* Fixed scenario when C5 would redirect to the wrong login page
 
 0.89.6
 * More sanity in saving phone numbers
