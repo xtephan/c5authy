@@ -83,7 +83,7 @@ class Authy {
 
         //and ask authy
         $got = $this->req( '/users/new', $payload , true );
-
+        echo "<pre>"; print_r($got);
         //are we ok?
         if( $got->success == false ) {
             throw new Exception( t('Authy error when creating/updating a user') );
@@ -108,17 +108,32 @@ class Authy {
      * @return boolean
      * @throws Exception
      */
-    public function validToken( $token, $auth_id ) {
+    public function validToken( $token, $authy_id ) {
 
         if( empty($token) ) {
             throw new Exception( t('Invalid token!') );
         }
 
-        if( empty($auth_id) ) {
+        if( empty($authy_id) ) {
             throw new Exception( t('Invalid authy ID!') );
         }
 
-        return false;
+
+        $got = $this->req( sprintf("/verify/%s/%s", $token, $authy_id) );
+
+        //sanity check
+        if( is_object($got) ) {
+
+            //did we got an OK?
+            if( $got->success == "true" && $got->token == "is valid" ) {
+                return true;
+            }
+
+            return false;
+        }
+
+        //one should not find itself here
+        throw new Exception( t('Authy Error: Unexpected response while verifying token!') );
     }
 
     /**
@@ -129,7 +144,7 @@ class Authy {
      * @param bool $post
      * @return mixed
      */
-    private function req( $path, $payload, $post = false ) {
+    private function req( $path, $payload = array(), $post = false ) {
 
         //compose the req url
         $url = sprintf( '%s/protected/%s%s?api_key=%s', $this->server, self::FORMAT, $path, $this->api_key );
