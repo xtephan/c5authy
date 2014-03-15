@@ -11,19 +11,31 @@ class C5authyPackage extends Package {
     //vars
     protected $pkgHandle 			= 'c5authy';
     protected $appVersionRequired	= '5.6.2';
-    protected $pkgVersion 			= '0.89.6';
+    protected $pkgVersion 			= '0.89.81';
 
     /**
-     * C5 required functions
+     * Package description
+     *
+     * @return string
      */
     public function getPackageDescription() {
         return t("Authy integration in C5 websites");
     }
 
+    /**
+     * Package Name
+     *
+     * @return string
+     */
     public function getPackageName() {
         return t("C5 Authy");
     }
 
+    /**
+     * Package handle
+     *
+     * @return string
+     */
     public function getPackageHandle(){
         return $this->pkgHandle;
     }
@@ -58,6 +70,9 @@ class C5authyPackage extends Package {
 
         $pkg = $this;
 
+        //Check dependencies
+        $this->checkDependencies($pkg);
+
         //callback to parent for install
         parent::install();
 
@@ -67,6 +82,8 @@ class C5authyPackage extends Package {
 
     /**
      * Upgrade the package
+     *
+     * @throws Exception
      */
     public function upgrade() {
 
@@ -233,15 +250,40 @@ class C5authyPackage extends Package {
      */
     public function updateUserAuthy( $ui ) {
 
+        /*
+         * So, C5 fires the on_user_add before it saved the attributes in DB
+         * This sucks and requires to do a hack and rely on post data for Authy data
+         */
+        if( isset($_POST["register"]) ) {
+
+            Loader::model('user_attributes');
+
+            //get the phone number
+            $phone_number_akID = UserAttributeKey::getByHandle('phone_number')->akID;
+            $dirty_phone_number = $_POST["akID"][$phone_number_akID]["value"];
+
+            //get email
+            $email_addr = $_POST["uEmail"];
+
+            //country code
+            $phone_cc_akID = UserAttributeKey::getByHandle('phone_country_code')->akID;
+            $country_code_selected_index = $_POST["akID"][$phone_cc_akID]["atSelectOptionID"][0];
+            $full_country_code = SelectAttributeTypeOption::getByID($country_code_selected_index)->value;
+
+        } else {
+            $dirty_phone_number = $ui->getAttribute('phone_number');
+            $full_country_code = (string)$ui->getAttribute('phone_country_code');
+            $email_addr = $ui->getUserEmail();
+        }
+
         //Allow only digits in the phone number
-        $dirty_phone_number = $ui->getAttribute('phone_number');
         $clean_phone_number = preg_replace("/[^0-9]/", "", $dirty_phone_number);
         if( $dirty_phone_number != $clean_phone_number ) {
             $ui->setAttribute('phone_number',$clean_phone_number);
         }
 
         //transform the country code in a format Authy likes
-        list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
+        list( $country_code, $junk ) = explode( ' ', $full_country_code );
         $country_code = ltrim( $country_code, '+' );
 
         //load the library
@@ -253,7 +295,7 @@ class C5authyPackage extends Package {
 
         //get the id
         $authy_id = $authy->getAuthyUserId(
-            $ui->getUserEmail(),
+            $email_addr,
             $clean_phone_number,
             $country_code
         );

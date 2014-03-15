@@ -1,6 +1,10 @@
+0.89.81
+* Fixed user registration
+
 0.89.6
 * More sanity in saving phone numbers
 * fallback in case authy ID not set
+* version check at install
 
 0.89.2
 * Updated config page
