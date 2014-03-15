@@ -209,20 +209,24 @@
                                 </div>
 
                             </div>
-                            <div class="control-group">
+                            <?php if( !$otp ) { ?>
+                                <div class="control-group">
 
-                                <label for="uPassword" class="control-label"><?php echo t('Password')?></label>
+                                    <label for="uPassword" class="control-label"><?php echo t('Password')?></label>
 
-                                <div class="controls">
-                                    <input tabindex="2" type="password" name="uPassword" id="uPassword" class="ccm-input-text" />
+                                    <div class="controls">
+                                        <input tabindex="2" type="password" name="uPassword" id="uPassword" class="ccm-input-text" />
+                                    </div>
+
                                 </div>
-
-                            </div>
+                            <?php } ?>
                             <div class="control-group">
 
                                 <label for="uPassword" class="control-label">
                                        <?php echo t('Token')?>
-                                       <a tabindex="4" href="javascript:void(0);" id="request_sms" style="font-size: 10px; display:block; margin-top: -5px; outline: none;">(<?php echo t('Request SMS token') ?>)</a>
+                                        <?php if( $sms ) { ?>
+                                            <a tabindex="4" href="javascript:void(0);" id="request_sms" style="font-size: 10px; display:block; margin-top: -5px; outline: none;">(<?php echo t('Request SMS token') ?>)</a>
+                                        <?php } ?>
                                 </label>
 
                                 <div class="controls">
@@ -278,6 +282,7 @@
         </div>
     </form>
 
+    <?php if( !$otp ) { //no need for password in OTP mode ?>
     <a name="forgot_password"></a>
 
     <form method="post" action="<?php echo $this->url('/login', 'forgot_password')?>" class="form-horizontal">
@@ -304,7 +309,7 @@
             </div>
         </div>
     </form>
-
+    <?php } ?>
 
     <?php  if (ENABLE_REGISTRATION == 1) { ?>
         <div class="row">

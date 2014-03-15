@@ -11,6 +11,8 @@ class Authy {
     //class wide variabled
     protected $api_key              = null;     //!< authy api key
     protected $server               = null;     //!< URL to RESTful server
+    protected $auth_type            = null;     //!< OTP or 2 Factor? or none?
+    protected $sms_token            = null;     //!< Do we allow sms tokens?
 
     //addresses for authy servers
     const LIVE_SERVER       = "https://api.authy.com";
@@ -21,35 +23,48 @@ class Authy {
 
     /**
      * Create a new object. Set the API key and the server
-     *
-     * @param $api_key
-     * @param bool $production
-     * @throws Exception
      */
-    public function __construct( $api_key = null, $production =false ) {
+    public function __construct() {
 
-        //load the data from config of is being passed to us?
-        if( empty($api_key) ) {
+        $this->loadConfig();
 
-            //get pachage and configuration
-            $pkg = Package::getByHandle("c5authy");
-            Loader::library('authy', $pkg);
+    }
 
-            $co = new Config();
-            $co->setPackageObject($pkg);
+    /**
+     * Loads the class configuration
+     */
+    private function loadConfig() {
 
-            $production = ( $co->get('authy_server_production') == "1" ? true : false );
+        //get pachage and configuration
+        $pkg = Package::getByHandle("c5authy");
+        Loader::library('authy', $pkg);
 
-            //set the values
-            $this->api_key = $co->get('authy_api_key');
-            $this->server = $production ? self::LIVE_SERVER : self::SANDBOX_SERVER;
+        $co = new Config();
+        $co->setPackageObject($pkg);
 
-        } else {
-            //set the values
-            $this->api_key = $api_key;
-            $this->server = $production ? self::LIVE_SERVER : self::SANDBOX_SERVER;
-        }
+        $production = ( $co->get('authy_server_production') == "1" ? true : false );
 
+        //set the values
+        $this->api_key = $co->get('authy_api_key');
+        $this->server = $production ? self::LIVE_SERVER : self::SANDBOX_SERVER;
+        $this->auth_type = $co->get('authy_type');
+        $this->sms_token = $co->get('authy_sms_tokens');
+    }
+
+    /**
+     * Convenience method to check if OTP
+     * @return bool
+     */
+    public function isOTP(){
+        return ($this->auth_type == "1");
+    }
+
+    /**
+     * Convenience method to check if we should try to SMS
+     * @return bool
+     */
+    public function isSMSAllowed(){
+        return ($this->sms_token != "0");
     }
 
     /**
@@ -58,6 +73,7 @@ class Authy {
      * @param string $email
      * @param string $phone_number
      * @param string $country_code
+     * @throws Exception
      */
     public function getAuthyUserId( $email, $phone_number, $country_code ) {
 
@@ -104,7 +120,7 @@ class Authy {
      * Validates a given token
      *
      * @param $token
-     * @param $auth_id
+     * @param $authy_id
      * @return boolean
      * @throws Exception
      */
@@ -145,11 +161,11 @@ class Authy {
     public function requestSMS( $authy_id ) {
 
         if( empty($authy_id) ) {
-            throw new Exception( t('Invalid authy ID!') );
+            throw new Exception( t('Authy Error: Invalid authy ID!') );
         }
 
         //Send the request
-        $got = $this->req( sprintf("/sms/%s", $authy_id), null, false, true );
+        $got = $this->req( sprintf("/sms/%s", $authy_id), null, false, ($this->sms_token=="2") );
 
         //sanity check
         if( is_object($got) ) {

@@ -8,7 +8,7 @@
 defined('C5_EXECUTE') or die("Access Denied.");
 
 //Set the header and dashboard theme
-$title="Authy Configuration";
+$title=t('Authy Configuration');
 echo Loader::helper('concrete/dashboard')->getDashboardPaneHeaderWrapper($title, false, 'span10 offset1', false);
 ?>
 

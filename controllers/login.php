@@ -14,6 +14,33 @@ defined('C5_EXECUTE') or die("Access Denied.");
  */
 class LoginController extends Concrete5_Controller_Login {
 
+    //classwide vars
+    protected $authy = null; //!< Authy instance
+
+    /**
+     * On start
+     */
+    public function on_start() {
+        parent::on_start(); //who know what secrets parent holds for us?
+
+        //init authy instance
+        $pkg = Package::getByHandle("c5authy");
+        Loader::library('authy', $pkg);
+
+        $this->authy = new Authy();
+    }
+
+    /**
+     * View task
+     */
+    public function view() {
+        parent::view(); //callback to parent
+
+        //send config to view
+        $this->set( 'otp', $this->authy->isOTP() );
+        $this->set( 'sms', $this->authy->isSMSAllowed() );
+    }
+
     /**
      * Do login.
      */
@@ -108,6 +135,11 @@ class LoginController extends Concrete5_Controller_Login {
      * Make a request to send an SMS token to a user
      */
     public function request_sms() {
+
+        //are sms allowed
+        if(!$this->authy->isSMSAllowed()) {
+            throw new Exception( t('SMS Disabled.') );
+        }
 
         //sanity check
         if( !$this->isPost() ) {
