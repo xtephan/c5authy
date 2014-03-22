@@ -1,0 +1,10 @@
+<?php
+/**
+ * Points to the correct login page
+ * c5authy
+ * @author: Stefan Fodor
+ * Built with love by Stefan Fodor @ 2014
+ */
+defined('C5_EXECUTE') or die("Access Denied.");
+require( Package::getByHandle('c5authy')->getPackagePath() . DIRECTORY_SEPARATOR . "single_pages" . DIRECTORY_SEPARATOR . "login.php" );
+?>

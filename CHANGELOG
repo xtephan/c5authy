@@ -2,6 +2,8 @@
 * Token inputs are now text and have size limit
 * Events moved to a library
 * Fixed error when adding new user from dashboard
+* Better requirement of the correct login page
+* README updates
 
 0.9
 * Small fixes

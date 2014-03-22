@@ -11,8 +11,7 @@ class C5authyPackage extends Package {
     //vars
     protected $pkgHandle 			= 'c5authy';
     protected $appVersionRequired	= '5.6.0';
-    protected $pkgVersion 			= '0.9.0.1';
-
+    protected $pkgVersion 			= '0.9.1
     /**
      * Package description
      *
@@ -64,6 +63,11 @@ class C5authyPackage extends Package {
             $event_file
         );
 
+        //load the correct login page
+        $objEnv = Environment::get();
+        $objEnv->overrideCoreByPackage('single_pages/login.php', $this);
+        $objEnv->overrideCoreByPackage('controllers/login.php', $this);
+
     }
 
     /**
@@ -76,6 +80,9 @@ class C5authyPackage extends Package {
 		
 		//and lets configure this suckers
         $this->configurePackage($pkg);
+
+        //and install the correct login page
+        $this->installLoginPage($pkg);
     }
 
     /**
@@ -99,6 +106,8 @@ class C5authyPackage extends Package {
 
         //clean up after ourselfs
         $this->unconfigurePackage();
+
+        $this->uninstallLoginPage();
 
         //callback to parrent
         parent::uninstall();
@@ -169,9 +178,41 @@ class C5authyPackage extends Package {
 	}
 
     /**
+     * Installs the correct login page
+     */
+    protected function installLoginPage() {
+
+        //backup any existing file
+        $path = getcwd() . DIRECTORY_SEPARATOR . "single_pages" . DIRECTORY_SEPARATOR;
+        if( file_exists($path . "login.php") ) {
+            rename( $path . "login.php", $path . "login.php.bak" );
+        }
+
+        //and copy the correct login single_page
+        $fixer_path  = dirname(__FILE__) . DIRECTORY_SEPARATOR . "single_pages" . DIRECTORY_SEPARATOR;
+        copy(  $fixer_path . "login.php.fixer", $path . "login.php" );
+    }
+
+    /**
+     * Revert back to the original login page
+     */
+    protected function uninstallLoginPage() {
+
+        //does a backup exists?
+        $path = getcwd() . DIRECTORY_SEPARATOR . "single_pages" . DIRECTORY_SEPARATOR;
+        if( file_exists($path . "login.php.bak") ) {
+            rename( $path . "login.php.bak", $path . "login.php" );
+        } else {
+            unlink($path . "login.php" );
+        }
+
+    }
+
+    /**
      * Unconfigure SinglePages
      */
     protected function unconfigureSinglePages() {
+
         //load needed models
         Loader::model('single_page');
 
@@ -179,19 +220,6 @@ class C5authyPackage extends Package {
         $sp = Page::getByPath('/dashboard/users/authy');
         $sp->delete();
 
-        //make sure C5 will use the default login page
-        $db = Loader::db();
-        $args = array(
-            '0', //concrete's default
-            Page::getByPath("/login")->getCollectionID() //login page ID
-        );
-        $db->query("update Pages set pkgID = ? where cID = ?", $args );
-
-        //and make sure the single page from core has the correct name
-        $path = getcwd() . DIRECTORY_SEPARATOR . "concrete" . DIRECTORY_SEPARATOR . "single_pages" . DIRECTORY_SEPARATOR;
-        if( file_exists( $path . "login.php.bak" )  ) {
-            rename( $path . "login.php.bak", $path . "login.php" );
-        }
     }
 
     /**

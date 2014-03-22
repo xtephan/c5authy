@@ -80,9 +80,11 @@
                         <?php echo t('Token')?>
                         <a tabindex="4" href="javascript:void(0);" id="request_sms" style="outline: none;">(<?php echo t('Request SMS token') ?>)</a>
                 </label>
-                <div class="controls">
-                    <input tabindex="3" type="text" name="uToken" id="uToken" maxlength="7" class="ccm-input-text">
-                </div>
+                <?php if($authy_enabled){ ?>
+                    <div class="controls">
+                        <input tabindex="3" type="text" name="uToken" id="uToken" maxlength="7" class="ccm-input-text">
+                    </div>
+                <?php } ?>
             </div>
 
             <div class="actions">
@@ -229,20 +231,22 @@
 
                                 </div>
                             <?php } ?>
-                            <div class="control-group">
+                            <?php if($authy_enabled){ ?>
+                                <div class="control-group">
 
-                                <label for="uPassword" class="control-label">
-                                       <?php echo t('Token')?>
-                                        <?php if( $sms ) { ?>
-                                            <a tabindex="4" href="javascript:void(0);" id="request_sms" style="font-size: 10px; display:block; margin-top: -5px; outline: none;">(<?php echo t('Request SMS token') ?>)</a>
-                                        <?php } ?>
-                                </label>
+                                    <label for="uPassword" class="control-label">
+                                           <?php echo t('Token')?>
+                                            <?php if( $sms ) { ?>
+                                                <a tabindex="4" href="javascript:void(0);" id="request_sms" style="font-size: 10px; display:block; margin-top: -5px; outline: none;">(<?php echo t('Request SMS token') ?>)</a>
+                                            <?php } ?>
+                                    </label>
 
-                                <div class="controls">
-                                    <input tabindex="3" type="text" name="uToken" id="uToken" maxlength="7" class="ccm-input-text" />
+                                    <div class="controls">
+                                        <input tabindex="3" type="text" name="uToken" id="uToken" maxlength="7" class="ccm-input-text" />
+                                    </div>
+
                                 </div>
-
-                            </div>
+                            <?php } ?>
                         </fieldset>
 
                         <?php  if (OpenIDAuth::isEnabled()) { ?>

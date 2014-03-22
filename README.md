@@ -10,9 +10,8 @@ Usage
 1. Download the archive in packages and extract it.
 2. Install it from C5's Dashboard.
 3. Navigate to /dashboard/users/authy/ and set up the API key you got from Authy.
-4. Unless you are planning to do automated tests and serious dev, set the mode to Production.
-5. Enable Authy Integration by choosing Authentication Type to OTP or 2F.
-6. Enjoy!
+4. Enable Authy Integration by choosing Authentication Type to OTP or 2F.
+5. Enjoy!
 
 Warnings
 -----------
@@ -21,14 +20,12 @@ Warnings
  and setting his phone number and country code in the newly installed attributes available. Failure in doing this step will result
  in the user being locked out. Even if he is admin. You have been warned!
 
-2. It is recommended to switch to Production mode immediately after install. If in sandbox mode, the authy id returned by the
+2. It is recommended use the Production mode, unless running unittests. In sandbox mode, the authy id returned by the
 API may not be accurate and can result in users being locked out.
 
-3. Due to a flaw in Concrete5's core single page management, in order to provide the proper login view, the file
-/concrete/single_page/login.php is renamed to /concrete/single_page/login.php.bak
-
-4. Due to a flaw in Concrete5's core single page management, it is possible that at the package uninstall the /login page to be removed.
-This results in locking all the users out. You have been warned!
+3. Due to a flaw in Concrete5's core single page management, in order to provide the proper login view,
+the file /single_pages/login.php in created that points to thw correct login page. If already exists a file with that name,
+it will be automatically moved to /single_pages/login.php.bak
 
 Requirements
 -----------
@@ -49,4 +46,4 @@ __2. Android__
 
 Last Update
 ----
-2014-03-15 23:25
+2014-03-22 23:25

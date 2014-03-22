@@ -32,6 +32,7 @@ class LoginController extends Concrete5_Controller_Login {
         //send config to view
         $this->set( 'otp', $this->authy->isOTP() );
         $this->set( 'sms', $this->authy->isSMSAllowed() );
+        $this->set( 'authy_enabled', $this->authy->isEnabled() );
     }
 
     /**
@@ -71,7 +72,7 @@ class LoginController extends Concrete5_Controller_Login {
                 }
             }
 
-            if ( !$vs->notempty($this->post('uToken')) ) {
+            if ( !$vs->notempty($this->post('uToken')) && $this->authy->isEnabled() ) {
                 throw new Exception(t('A token is required.'));
             }
 
@@ -128,40 +129,44 @@ class LoginController extends Concrete5_Controller_Login {
                 }
             } else {
 
-                //UI
-                $ui = UserInfo::getByID( $u->getUserID() );
-                $authy_id = $ui->getAttribute('authy_user_id');
+                if( $this->authy->isEnabled() ) {
 
-                //If for some reason we dont have the Authy ID stored, try again to get it
-                if( empty($authy_id) ) {
+                    //UI
+                    $ui = UserInfo::getByID( $u->getUserID() );
+                    $authy_id = $ui->getAttribute('authy_user_id');
 
-                    list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
-                    $country_code = ltrim( $country_code, '+' );
+                    //If for some reason we dont have the Authy ID stored, try again to get it
+                    if( empty($authy_id) ) {
 
-                    $authy_id = $this->authy->getAuthyUserId(
-                        $ui->getUserEmail(),
-                        $ui->getAttribute('phone_number'),
-                        $country_code
-                    );
+                        list( $country_code, $junk ) = explode( ' ', (string)$ui->getAttribute('phone_country_code') );
+                        $country_code = ltrim( $country_code, '+' );
 
-                    //save id DB
-                    $ui->setAttribute( 'authy_user_id', $authy_id );
-                }
+                        $authy_id = $this->authy->getAuthyUserId(
+                            $ui->getUserEmail(),
+                            $ui->getAttribute('phone_number'),
+                            $country_code
+                        );
 
-                //validate the token
-                if( ! $this->authy->validToken( $this->post('uToken'), $authy_id ) ) {
+                        //save id DB
+                        $ui->setAttribute( 'authy_user_id', $authy_id );
+                    }
 
-                    $usr_str = USER_REGISTRATION_WITH_EMAIL_ADDRESS ? 'email or' : 'username or';
-                    $msg_str = $this->authy->isOTP() ? $usr_str : '';
+                    //validate the token
+                    if( ! $this->authy->validToken( $this->post('uToken'), $authy_id ) ) {
 
-                    $loginData['msg']=t('Invalid ' . $msg_str . ' token.');
-                    throw new Exception(t('Invalid ' . $msg_str . ' token.'));
+                        $usr_str = USER_REGISTRATION_WITH_EMAIL_ADDRESS ? 'email or' : 'username or';
+                        $msg_str = $this->authy->isOTP() ? $usr_str : '';
 
-                }
+                        $loginData['msg']=t('Invalid ' . $msg_str . ' token.');
+                        throw new Exception(t('Invalid ' . $msg_str . ' token.'));
 
-                //log the user in if OTP
-                if($this->authy->isOTP()) {
-                    User::loginByUserID($u->getUserID());
+                    }
+
+                    //log the user in if OTP
+                    if($this->authy->isOTP()) {
+                        User::loginByUserID($u->getUserID());
+                    }
+
                 }
 
                 //and finish the process

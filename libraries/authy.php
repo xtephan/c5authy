@@ -68,6 +68,14 @@ class Authy {
     }
 
     /**
+     * Convenience method to check if authy is enabled
+     * @return bool
+     */
+    public function isEnabled() {
+        return ($this->auth_type != "0");
+    }
+
+    /**
      * Returns the Authy ID of a certain user
      *
      * @param string $email
