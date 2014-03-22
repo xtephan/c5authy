@@ -1,3 +1,6 @@
+0.9.1
+* Token inputs are now text and have size limit
+
 0.9
 * Small fixes
 * README

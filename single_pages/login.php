@@ -81,7 +81,7 @@
                         <a tabindex="4" href="javascript:void(0);" id="request_sms" style="outline: none;">(<?php echo t('Request SMS token') ?>)</a>
                 </label>
                 <div class="controls">
-                    <input tabindex="3" type="password" name="uToken" id="uToken" class="ccm-input-text">
+                    <input tabindex="3" type="text" name="uToken" id="uToken" maxlength="7" class="ccm-input-text">
                 </div>
             </div>
 
@@ -239,7 +239,7 @@
                                 </label>
 
                                 <div class="controls">
-                                    <input tabindex="3" type="password" name="uToken" id="uToken" class="ccm-input-text" />
+                                    <input tabindex="3" type="text" name="uToken" id="uToken" maxlength="7" class="ccm-input-text" />
                                 </div>
 
                             </div>
