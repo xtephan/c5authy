@@ -12,7 +12,7 @@ class C5authyPackage extends Package {
     protected $pkgHandle 			= 'c5authy';
     protected $appVersionRequired	= '5.6.0';
     protected $pkgVersion 			= '0.9.1';
-    
+
     /**
      * Package description
      *
