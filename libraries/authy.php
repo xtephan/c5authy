@@ -102,7 +102,7 @@ class Authy {
 
         //are we ok?
         if( $got->success == false ) {
-            throw new Exception( t('Authy error when creating/updating a user') );
+            throw new Exception( t('Authy error when creating/updating a user: ') . $got->message );
         }
 
         //if ok, safe navigate to user id

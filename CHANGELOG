@@ -1,5 +1,7 @@
 0.9.1
 * Token inputs are now text and have size limit
+* Events moved to a library
+* Fixed error when adding new user from dashboard
 
 0.9
 * Small fixes
